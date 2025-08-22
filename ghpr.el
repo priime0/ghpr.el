@@ -3,7 +3,7 @@
 ;; Author: Lucas Sta Maria
 ;; Maintainer: Lucas Sta Maria
 ;; Version: 0.1
-;; Package-Requires: (magit)
+;; Package-Requires: (magit request)
 ;; Homepage: https://git.priime.dev/lucas/ghpr.el
 ;; Keywords: git
 
@@ -31,6 +31,28 @@
 ;; interactive commands for controlling ghpr.
 
 ;;; Code:
+
+(require 'ghpr-api)
+(require 'ghpr-repo)
+(require 'ghpr-utils)
+(require 'ghpr-review)
+
+(defun ghpr-prs ()
+  "List and choose from the current repository's open PRs."
+  (interactive)
+  (let* ((repo-name (ghpr--get-repo-name))
+         (prs (and repo-name (ghpr--list-open-prs repo-name))))
+    (cond
+     ((not repo-name)
+      (message "Not in a GitHub repository"))
+     ((not prs)
+      (message "No open pull requests found"))
+     (t
+      (let* ((pr-items (mapcar #'ghpr--pr-summary-selection prs))
+             (selected-item (completing-read "Select PR: " pr-items nil t)))
+        (when selected-item
+          (let ((pr (cdr (assoc selected-item pr-items))))
+            (ghpr--open-pr pr repo-name))))))))
 
 (provide 'ghpr)
 

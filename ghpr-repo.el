@@ -31,6 +31,16 @@
 
 ;;; Code:
 
+(require 'magit)
+
+(defun ghpr--get-repo-name ()
+  "Get the GitHub repository name in owner/repo format from origin remote.
+Returns nil if origin remote doesn't exist or is not a GitHub repository."
+  (when (magit-remote-p "origin")
+    (let ((origin-url (magit-get "remote.origin.url")))
+      (when (string-match "github\\.com[:/]\\([^/]+/[^/.]+\\)" origin-url)
+        (match-string 1 origin-url)))))
+
 (provide 'ghpr-repo)
 
 ;;; ghpr-repo.el ends here
