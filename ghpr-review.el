@@ -71,7 +71,7 @@
      (0 'ghpr-review-misc-line)))
   "Font lock keywords for ghpr-review-mode.")
 
-(defvar-local ghpr-review-diff-content nil
+(defvar-local ghpr--review-diff-content nil
   "Buffer-local variable storing the diff content for the current PR.")
 
 (define-derived-mode ghpr-review-mode text-mode "GHPR Review"
@@ -105,7 +105,7 @@
   (let* ((number (alist-get 'number pr))
          (diff-content (ghpr--get-diff-content repo-name number))
          (contents (ghpr--open-pr/collect-contents pr diff-content)))
-    (setq ghpr-review-diff-content diff-content)
+    (setq ghpr--review-diff-content diff-content)
     (insert (ghpr--prefix-lines contents))))
 
 (defun ghpr--open-pr (pr repo-name)
