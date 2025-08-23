@@ -35,6 +35,7 @@ Returns the token string if found, nil otherwise."
 (defun ghpr--parse-api-pr (pr)
   "Parse a single pull request object, keeping only essential fields."
   (let ((base (alist-get 'base pr))
+        (head (alist-get 'head pr))
         (user (alist-get 'user pr)))
     `((url . ,(alist-get 'url pr))
       (id . ,(alist-get 'id pr))
@@ -46,7 +47,9 @@ Returns the token string if found, nil otherwise."
       (title . ,(alist-get 'title pr))
       (body . ,(alist-get 'body pr))
       (username . ,(alist-get 'login user))
+      (author . ,(alist-get 'login user))
       (base_sha . ,(alist-get 'sha base))
+      (head_sha . ,(alist-get 'sha head))
       (merge_commit_sha . ,(alist-get 'merge_commit_sha pr)))))
 
 (defun ghpr--parse-api-pr-list (pr-list)
@@ -93,6 +96,48 @@ Returns a list of pull request objects on success, nil on failure."
         :error (cl-function
                 (lambda (&key error-thrown &allow-other-keys)
                   (message "Error fetching diff: %s" error-thrown)))))
+    result))
+
+(defun ghpr--create-review (repo-name pr-number commit-id body event comments)
+  "Create a review for PR-NUMBER in REPO-NAME.
+COMMIT-ID is the SHA of the commit to review.
+BODY is the overall review comment.
+EVENT should be 'APPROVE', 'REQUEST_CHANGES', or 'COMMENT'.
+COMMENTS is a list of inline comments, each with keys: path, position, body.
+Returns t on success, nil on failure."
+  (let ((token (ghpr--get-token))
+        (url (format "https://api.github.com/repos/%s/pulls/%s/reviews" repo-name pr-number))
+        (result nil)
+        (payload `((commit_id . ,commit-id)
+                   (body . ,body)
+                   (event . ,event)
+                   (comments . ,(vconcat comments)))))
+
+    (when token
+      (request url
+        :type "POST"
+        :headers `(("Accept" . "application/vnd.github+json")
+                   ("Authorization" . ,(format "Bearer %s" token))
+                   ("X-GitHub-Api-Version" . "2022-11-28")
+                   ("Content-Type" . "application/json"))
+        :data (json-encode payload)
+        :parser 'json-read
+        :sync t
+        :success (cl-function
+                  (lambda (&key data &allow-other-keys)
+                    (setq result t)
+                    (message "Review created successfully")))
+        :error (cl-function
+                (lambda (&key data error-thrown response &allow-other-keys)
+                  (let ((status-code (when response (request-response-status-code response)))
+                        (error-body (when data (json-encode data)))
+                        (errors (when data (alist-get 'errors data))))
+                    (message "Error creating review (HTTP %s): %s"
+                             (or status-code "unknown")
+                             error-thrown)
+                    (when errors
+                      (--each errors
+                        (message "Error creating review (HTTP %s): %s" (or status-code "unknown") it))))))))
     result))
 
 (provide 'ghpr-api)

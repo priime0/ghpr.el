@@ -25,8 +25,9 @@
 (defun ghpr--pr-summary (pr)
   "Formats a PR into a summary."
   (let* ((number (alist-get 'number pr))
-         (title (alist-get 'title pr)))
-    (format "[#%s] %s" number title)))
+         (title (alist-get 'title pr))
+         (author (alist-get 'author pr)))
+    (format "[#%s] @%s: %s" number author title)))
 
 (defun ghpr--pr-summary-selection (pr)
   "Formats a PR into a summary for a minibuffer selection."
