@@ -57,6 +57,9 @@
      (0 'ghpr-review-removed-line t)))
   "Font lock keywords for ghpr-review-mode.")
 
+(defvar-local ghpr-review-diff-content nil
+  "Buffer-local variable storing the diff content for the current PR.")
+
 (define-derived-mode ghpr-review-mode text-mode "GHPR Review"
   "Major mode for reviewing GitHub pull requests."
   :group 'ghpr
@@ -72,22 +75,23 @@
   (let ((lines (split-string text "\n")))
     (mapconcat #'ghpr--prefix-line lines "\n")))
 
-(defun ghpr--open-pr/collect-contents (pr repo-name)
+(defun ghpr--open-pr/collect-contents (pr diff-content)
   "Return a string of the title, body, and patch content separated by newlines."
   (let* ((body (or (alist-get 'body pr) ""))
-         (number (alist-get 'number pr))
          (content-parts (list (ghpr--pr-summary pr))))
     (when (not (string-empty-p body))
       (push body content-parts))
-    (let ((patch-content (ghpr--get-diff-content repo-name number)))
-      (when patch-content
-        (push patch-content content-parts)))
+    (when diff-content
+      (push diff-content content-parts))
     (mapconcat 'identity (reverse content-parts) "\n\n")))
 
 (defun ghpr--open-pr/insert-contents (pr repo-name)
   "Insert the contents of the pr into the current buffer."
   (erase-buffer)
-  (let ((contents (ghpr--open-pr/collect-contents pr repo-name)))
+  (let* ((number (alist-get 'number pr))
+         (diff-content (ghpr--get-diff-content repo-name number))
+         (contents (ghpr--open-pr/collect-contents pr diff-content)))
+    (setq ghpr-review-diff-content diff-content)
     (insert (ghpr--prefix-lines contents))))
 
 (defun ghpr--open-pr (pr repo-name)
