@@ -62,7 +62,8 @@
     ("^\\(> -[^-]\\)\\(.*\\)$"   (0 'ghpr-review-removed-line t))
     ("^\\(> -\\)$"               (0 'ghpr-review-removed-line t))
     ("^<.*$"                     (0 'ghpr-review-existing-review t))
-    ("^>.*$"                     (0 'ghpr-review-misc-line)))
+    ("^\\(> [^+-]\\)\\(.*\\)$"   (0 'ghpr-review-misc-line t))
+    ("^\\(> \\)$"                (0 'ghpr-review-misc-line t)))
   "Font lock keywords for ghpr-review-mode.")
 
 (defvar-local ghpr--review-diff-content nil
