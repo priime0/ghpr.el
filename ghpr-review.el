@@ -57,18 +57,12 @@
   :group 'ghpr)
 
 (defvar ghpr-review-font-lock-keywords
-  '(("^\\(> \\+[^+]\\)\\(.*\\)$"
-     (0 'ghpr-review-added-line t))
-    ("^\\(> \\+\\)$"  ; Handle line with just "> +"
-     (0 'ghpr-review-added-line t))
-    ("^\\(> -[^-]\\)\\(.*\\)$"
-     (0 'ghpr-review-removed-line t))
-    ("^\\(> -\\)$"  ; Handle line with just "> -"
-     (0 'ghpr-review-removed-line t))
-    ("^<.*$"
-     (0 'ghpr-review-existing-review t))
-    ("^>.*$"
-     (0 'ghpr-review-misc-line)))
+  '(("^\\(> \\+[^+]\\)\\(.*\\)$" (0 'ghpr-review-added-line t))
+    ("^\\(> \\+\\)$"             (0 'ghpr-review-added-line t))
+    ("^\\(> -[^-]\\)\\(.*\\)$"   (0 'ghpr-review-removed-line t))
+    ("^\\(> -\\)$"               (0 'ghpr-review-removed-line t))
+    ("^<.*$"                     (0 'ghpr-review-existing-review t))
+    ("^>.*$"                     (0 'ghpr-review-misc-line)))
   "Font lock keywords for ghpr-review-mode.")
 
 (defvar-local ghpr--review-diff-content nil
