@@ -49,7 +49,11 @@ Returns the token string if found, nil otherwise."
       (username . ,(alist-get 'login user))
       (author . ,(alist-get 'login user))
       (base_sha . ,(alist-get 'sha base))
+      (base_ref . ,(alist-get 'ref base))
       (head_sha . ,(alist-get 'sha head))
+      (head_ref . ,(alist-get 'ref head))
+      (head_repo . ,(alist-get 'repo head))
+      (head_user . ,(alist-get 'user head))
       (merge_commit_sha . ,(alist-get 'merge_commit_sha pr)))))
 
 (defun ghpr--parse-api-pr-list (pr-list)

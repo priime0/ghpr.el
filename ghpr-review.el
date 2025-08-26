@@ -35,6 +35,7 @@
 (require 'magit-git)
 
 (require 'ghpr-api)
+(require 'ghpr-repo)
 (require 'ghpr-utils)
 
 (defface ghpr-review-added-line
@@ -82,6 +83,7 @@
     (define-key prefix-map (kbd "C-c") 'ghpr-review-comment)
     (define-key prefix-map (kbd "C-a") 'ghpr-review-approve)
     (define-key prefix-map (kbd "C-r") 'ghpr-review-reject-changes)
+    (define-key prefix-map (kbd "C-o") 'ghpr-review-checkout-branch)
     (define-key map (kbd "C-c") prefix-map)
     map)
   "Keymap for `ghpr-review-mode'.")
@@ -400,6 +402,13 @@ Collects review body and inline comments from current buffer."
   "Submit review with REQUEST_CHANGES event."
   (interactive)
   (ghpr--submit-review "REQUEST_CHANGES"))
+
+(defun ghpr-review-checkout-branch ()
+  "Check out the PR branch using Magit."
+  (interactive)
+  (unless ghpr--review-pr-metadata
+    (error "No PR metadata found in buffer"))
+  (ghpr--checkout-pr-branch ghpr--review-pr-metadata))
 
 (provide 'ghpr-review)
 
