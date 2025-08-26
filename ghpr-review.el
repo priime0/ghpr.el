@@ -84,6 +84,7 @@
     (define-key prefix-map (kbd "C-a") 'ghpr-review-approve)
     (define-key prefix-map (kbd "C-r") 'ghpr-review-reject-changes)
     (define-key prefix-map (kbd "C-o") 'ghpr-review-checkout-branch)
+    (define-key prefix-map (kbd "C-d") 'ghpr-review-magit-diff)
     (define-key prefix-map (kbd "C-k") 'ghpr-review-quit)
     (define-key map (kbd "C-c") prefix-map)
     map)
@@ -410,6 +411,63 @@ Collects review body and inline comments from current buffer."
   (unless ghpr--review-pr-metadata
     (error "No PR metadata found in buffer"))
   (ghpr--checkout-pr-branch ghpr--review-pr-metadata))
+
+(defun ghpr--review-magit-diff/both-local (local-base-branch local-pr-branch)
+  "Handle case where both base and PR branches exist locally."
+  (message "Diffing local branches: %s..%s" local-base-branch local-pr-branch)
+  (magit-diff-range (format "%s..%s" local-base-branch local-pr-branch)))
+
+(defun ghpr--review-magit-diff/base-local-pr-remote (local-base-branch local-pr-branch pr-metadata)
+  "Handle case where base branch exists locally but PR branch needs to be fetched."
+  (message "Local base branch found, fetching and checking out PR branch...")
+  (magit-git-fetch "origin" nil)
+  (ghpr--checkout-pr-branch pr-metadata)
+  (if (magit-branch-p local-pr-branch)
+      (progn
+        (message "Diffing: %s..%s" local-base-branch local-pr-branch)
+        (magit-diff-range (format "%s..%s" local-base-branch local-pr-branch)))
+    (error "Unable to create PR branch. This may happen when testing on a repository that doesn't contain the actual PR")))
+
+(defun ghpr--review-magit-diff/remote-handling (local-base-branch local-pr-branch remote-base-branch local-base-exists-p local-pr-exists-p pr-metadata)
+  "Handle case where remote operations are needed for base and/or PR branch."
+  (message "Local branches not found, fetching and checking out...")
+  (magit-git-fetch "origin" nil)
+  (unless local-pr-exists-p
+    (ghpr--checkout-pr-branch pr-metadata))
+  (let ((base-to-use (if local-base-exists-p local-base-branch remote-base-branch)))
+    (if (magit-branch-p local-pr-branch)
+        (progn
+          (message "Diffing: %s..%s" base-to-use local-pr-branch)
+          (magit-diff-range (format "%s..%s" base-to-use local-pr-branch)))
+      (error "Unable to create PR branch. This may happen when testing on a repository that doesn't contain the actual PR"))))
+
+(defun ghpr-review-magit-diff ()
+  "Show Magit diff between PR base and head branches.
+Checks if branches exist locally first, falls back to remote handling if needed."
+  (interactive)
+  (unless ghpr--review-pr-metadata
+    (error "No PR metadata found in buffer"))
+
+  (let* ((pr-number (alist-get 'number ghpr--review-pr-metadata))
+         (base-ref (alist-get 'base_ref ghpr--review-pr-metadata))
+         (head-ref (alist-get 'head_ref ghpr--review-pr-metadata))
+         (local-pr-branch head-ref)
+         (local-base-branch base-ref)
+         (remote-base-branch (format "origin/%s" base-ref))
+         (local-base-exists-p (magit-branch-p local-base-branch))
+         (local-pr-exists-p (magit-branch-p local-pr-branch)))
+    (unless base-ref
+      (error "PR metadata missing base branch reference"))
+    (unless head-ref
+      (error "PR metadata missing head branch reference"))
+
+    (cond
+     ((and local-base-exists-p local-pr-exists-p)
+      (ghpr--review-magit-diff/both-local local-base-branch local-pr-branch))
+     (local-base-exists-p
+      (ghpr--review-magit-diff/base-local-pr-remote local-base-branch local-pr-branch ghpr--review-pr-metadata))
+     (t
+      (ghpr--review-magit-diff/remote-handling local-base-branch local-pr-branch remote-base-branch local-base-exists-p local-pr-exists-p ghpr--review-pr-metadata)))))
 
 (defun ghpr-review-quit ()
   "Quit and close the review buffer with confirmation."
