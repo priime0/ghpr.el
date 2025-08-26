@@ -137,7 +137,7 @@
       (ghpr-review-mode)
       (ghpr--open-pr/insert-contents pr repo-name)
       (goto-char (point-min)))
-    (display-buffer buffer)))
+    (switch-to-buffer-other-window buffer)))
 
 (defun ghpr--is-comment-line (line)
   "Return t if LINE is a user comment (no prefix), nil otherwise."
