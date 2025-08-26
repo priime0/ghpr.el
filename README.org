@@ -1,0 +1,64 @@
+#+title: ghpr.el
+
+ghpr.el provides functionality for reviewing GitHub pull requests from Emacs.
+
+This was inspired by matklad's [[https://tigerbeetle.com/blog/2025-08-04-code-review-can-be-better/][post on code review]], the [[https://lobste.rs/s/zxglnn/code_review_can_be_better][following discussion]], and the mentioned tool [[https://github.com/danobi/prr][prr]], which it lifts ideas from. The package aims to bring a reasonable experience of reviewing pull requests from within Emacs, allowing you to run code and tests locally, leverage LSP when exploring newly-added code, and submit reviews against a diff.
+
+This package is not yet stable (version < 1.0). Expect breaking UX changes.
+
+** Setup
+
+With [[https://github.com/radian-software/straight.el][straight]] and [[https://github.com/jwiegley/use-package][use-package]]:
+
+#+begin_src elisp
+(use-package ghpr
+  :straight (ghpr :type git :host github :repo "priime0/ghpr.el"))
+#+end_src
+
+** Feature set
+
+Current features:
+ * Listing and selecting PRs from minibuffer
+ * Viewing a PR diff
+ * Writing a body comment and code review comments
+ * Submitting the body comment, code review comments, and status (accept, request changes, comment)
+ * Checking out the PR branch from ghpr-review-mode
+ * Viewing Magit diffs of the PR branch next to ghpr-review-mode
+
+Planned features:
+ * Viewing existing review comments, prefixed with ~<~
+ * Responding in =ghpr-review-mode= to existing comments
+ * Better UX
+
+** Workflow
+
+ * Fetch recent PRs with =ghpr-prs=. This will open a minibuffer to select one of the PRs.
+ * After you select a PR, it will open in a new buffer.
+ * Add your comments by inserting new lines (see example).
+ * =C-c C-o=: checkout the changes to run locally or poke around the code.
+ * =C-c C-d=: view a Magit diff of the PR
+ * =C-c C-a=: accept the pull request
+ * =C-c C-r=: request changes to the pull request
+ * =C-c C-c=: comment on the pull request
+ * =C-c C-k=: cancel reviewing the pull request
+
+** Example format
+
+#+begin_src
+> [#241] @author: PR title
+>
+> diff --git a/test.md b/test.md
+> index aa9e6ef..ae07d61 100644
+> --- a/test.md
+> +++ b/test.md
+> @@ -1,3 +1,5 @@
+> +This is an example sentence being added.
+> +
+This is a comment attached to the line above.
+>  This is existing text.
+>
+> -This is a test modification.
+> +This is a test change.
+This is a multi-line PR comment
+attached to the change above.
+#+end_src
