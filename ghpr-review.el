@@ -84,6 +84,7 @@
     (define-key prefix-map (kbd "C-a") 'ghpr-review-approve)
     (define-key prefix-map (kbd "C-r") 'ghpr-review-reject-changes)
     (define-key prefix-map (kbd "C-o") 'ghpr-review-checkout-branch)
+    (define-key prefix-map (kbd "C-k") 'ghpr-review-quit)
     (define-key map (kbd "C-c") prefix-map)
     map)
   "Keymap for `ghpr-review-mode'.")
@@ -409,6 +410,12 @@ Collects review body and inline comments from current buffer."
   (unless ghpr--review-pr-metadata
     (error "No PR metadata found in buffer"))
   (ghpr--checkout-pr-branch ghpr--review-pr-metadata))
+
+(defun ghpr-review-quit ()
+  "Quit and close the review buffer with confirmation."
+  (interactive)
+  (when (yes-or-no-p "Quit review? ")
+    (kill-buffer (current-buffer))))
 
 (provide 'ghpr-review)
 
