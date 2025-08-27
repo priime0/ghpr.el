@@ -265,18 +265,22 @@ of comment lines and next-index is the index after the last comment line."
 (defun ghpr--collect-review-body ()
   "Collect review body comment from the top of the buffer.
 Returns the body text as a string, or nil if no body found.
-Body is everything from the start until the first line with special characters (>, <)."
+Body is everything from the start until the first line with special characters (>, <).
+Processes the body to join lines separated by single newlines."
   (let* ((lines (vconcat (split-string (buffer-string) "\n")))
          (body-lines '())
-         (index 0))
+         (index 0)
+         (has-content nil))
     (while (and (< index (length lines))
                 (not (ghpr--special-line-p (aref lines index))))
       (let ((line (aref lines index)))
-        (unless (string-empty-p (string-trim line))
-          (push (substring-no-properties line) body-lines)))
+        (if (string-empty-p (string-trim line))
+            (push "" body-lines)
+          (push (substring-no-properties line) body-lines)
+          (setq has-content t)))
       (setq index (1+ index)))
-    (when body-lines
-      (string-join (reverse body-lines) "\n"))))
+    (when has-content
+      (ghpr--process-review-comment (string-join (reverse body-lines) "\n")))))
 
 (defun ghpr--skip-review-body (lines)
   "Skip to the first line with special characters (>, <) to get past the body.
@@ -325,6 +329,24 @@ Errors if the comment is missing required fields or has empty body."
       (position . ,position)
       (body . ,comment-body))))
 
+(defun ghpr--process-review-comment (comment-text)
+  "Process COMMENT-TEXT by joining lines separated by single newlines.
+Lines separated by only a single newline are joined with a space.
+Lines separated by double newlines (blank line between) are preserved as paragraphs."
+  (let* ((paragraphs (split-string comment-text "\n\n" t))
+         (processed-paragraphs
+          (mapcar (lambda (paragraph)
+                    (string-join (split-string paragraph "\n" t) " "))
+                  paragraphs)))
+    (string-join processed-paragraphs "\n\n")))
+
+(defun ghpr--process-comment-entry (comment)
+  "Process a single comment entry by applying comment text processing.
+Returns a new comment entry with the processed comment text."
+  (let ((processed-comment-text (ghpr--process-review-comment (alist-get 'comment comment))))
+    (cons (cons 'comment processed-comment-text)
+          (assq-delete-all 'comment comment))))
+
 (defun ghpr--build-comment-with-context (comment-lines comment-start-index lines)
   "Build a comment entry with GitHub API context for COMMENT-LINES.
 Uses COMMENT-START-INDEX to find the preceding code line in LINES.
@@ -351,10 +373,12 @@ Returns t if validation passes, nil otherwise."
   "Collect all inline review comments from the current buffer.
 Returns an alist of comments with their associated diff lines and GitHub API context.
 Multi-line comments are grouped together until the next line with angle brackets.
-Skips the review body at the top of the buffer."
+Skips the review body at the top of the buffer.
+Processes comments to join lines separated by single newlines."
   (let* ((lines (vconcat (split-string (buffer-string) "\n")))
-         (body-end-index (ghpr--skip-review-body lines)))
-    (ghpr--collect-inline-comments-after-body lines body-end-index)))
+         (body-end-index (ghpr--skip-review-body lines))
+         (raw-comments (ghpr--collect-inline-comments-after-body lines body-end-index)))
+    (mapcar #'ghpr--process-comment-entry raw-comments)))
 
 (defun ghpr-collect-review-comments ()
   "Interactive command to collect and display review comments from current buffer."
