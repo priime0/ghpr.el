@@ -128,16 +128,28 @@
     (setq ghpr--review-repo-name repo-name)
     (insert contents)))
 
-(defun ghpr--open-pr (pr repo-name)
-  "Open a new buffer containing the body of the PR."
+;; FIXME: this feels like poor separation of concerns
+(defun ghpr--open-pr (pr repo-name &optional prs-list-buffer)
+  "Open a new buffer containing the body of the PR.
+If PRS-LIST-BUFFER is provided, kill it after successfully opening the PR."
   (let* ((number (alist-get 'number pr))
          (buffer-name (format "*ghpr-pr-%s*" number))
          (buffer (get-buffer-create buffer-name)))
-    (with-current-buffer buffer
-      (ghpr-review-mode)
-      (ghpr--open-pr/insert-contents pr repo-name)
-      (goto-char (point-min)))
-    (switch-to-buffer-other-window buffer)))
+    (condition-case err
+        (progn
+          (with-current-buffer buffer
+            (ghpr-review-mode)
+            (ghpr--open-pr/insert-contents pr repo-name)
+            (goto-char (point-min)))
+          (if prs-list-buffer
+              (switch-to-buffer buffer)
+            (switch-to-buffer-other-window buffer))
+          (when (and prs-list-buffer (buffer-live-p prs-list-buffer))
+            (kill-buffer prs-list-buffer)))
+      (error
+       (when (get-buffer buffer-name)
+         (kill-buffer buffer-name))
+       (signal (car err) (cdr err))))))
 
 (defun ghpr--is-comment-line (line)
   "Return t if LINE is a user comment (no prefix), nil otherwise."
