@@ -82,6 +82,28 @@ Returns a list of pull request objects on success, nil on failure."
                   (message "Error fetching pull requests: %s" error-thrown)))))
     result))
 
+(defun ghpr--get-pr (repo-name pr-number)
+  "Retrieve a single pull request by PR-NUMBER in REPO-NAME.
+Returns a parsed PR object on success, nil on failure."
+  (let ((token (ghpr--get-token))
+        (url (format "https://api.github.com/repos/%s/pulls/%s" repo-name pr-number))
+        (result nil))
+    (when token
+      (request url
+        :type "GET"
+        :headers `(("Accept" . "application/vnd.github+json")
+                   ("Authorization" . ,(format "Bearer %s" token))
+                   ("X-GitHub-Api-Version" . "2022-11-28"))
+        :parser 'json-read
+        :sync t
+        :success (cl-function
+                  (lambda (&key data &allow-other-keys)
+                    (setq result (ghpr--parse-api-pr data))))
+        :error (cl-function
+                (lambda (&key error-thrown &allow-other-keys)
+                  (message "Error fetching PR: %s" error-thrown)))))
+    result))
+
 (defun ghpr--get-diff-content (repo-name pr-number)
   "Retrieve the diff contents for PR-NUMBER in REPO-NAME."
   (let ((token (ghpr--get-token))

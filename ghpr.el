@@ -54,6 +54,15 @@
           (let ((pr (cdr (assoc selected-item pr-items))))
             (ghpr--open-pr pr repo-name))))))))
 
+(defun ghpr-open-pr (pr-number)
+  "Open a specific pull request by PR-NUMBER."
+  (interactive "nPR number: ")
+  (let* ((repo-name (ghpr--get-repo-name))
+         (pr (when repo-name (ghpr--get-pr repo-name pr-number))))
+    (if pr
+        (ghpr--open-pr pr repo-name)
+      (message "Could not open PR #%d" pr-number))))
+
 (provide 'ghpr)
 
 ;;; ghpr.el ends here
