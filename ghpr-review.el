@@ -68,14 +68,14 @@
     ("^\\(> \\)$"                (0 'ghpr-review-misc-line t)))
   "Font lock keywords for ghpr-review-mode.")
 
-(defvar-local ghpr--review-diff-content nil
-  "Buffer-local variable storing the diff content for the current PR.")
+(defvar-local ghpr--review-base-content nil
+  "Stores the base starting content, including diff, for the current PR.")
 
 (defvar-local ghpr--review-pr-metadata nil
-  "Buffer-local variable storing the PR metadata for the current PR.")
+  "Stores the PR metadata for the current PR.")
 
 (defvar-local ghpr--review-repo-name nil
-  "Buffer-local variable storing the repository name for the current PR.")
+  "Stores the repository name for the current PR.")
 
 (defvar ghpr-review-mode-map
   (let ((map (make-sparse-keymap))
@@ -111,7 +111,7 @@
   "Return a string of the title, body, and patch content separated by newlines."
   (let* ((body (or (alist-get 'body pr) ""))
          (content-parts (list (ghpr--pr-summary pr))))
-    (when (not (string-empty-p body))
+    (when (and body (not (string-empty-p body)))
       (push body content-parts))
     (when diff-content
       (push diff-content content-parts))
@@ -123,7 +123,7 @@
   (let* ((number (alist-get 'number pr))
          (diff-content (ghpr--get-diff-content repo-name number))
          (contents (ghpr--open-pr/collect-contents pr diff-content)))
-    (setq ghpr--review-diff-content diff-content)
+    (setq ghpr--review-base-content contents)
     (setq ghpr--review-pr-metadata pr)
     (setq ghpr--review-repo-name repo-name)
     (insert (ghpr--prefix-lines contents))))
