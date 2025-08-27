@@ -47,6 +47,12 @@ Planned features:
 ** Example format
 
 #+begin_src
+This is the review's body. Markdown *is*
+supported throughout the body and your
+individual review comments. Lines separated
+by a single newline are joined together.
+
+Paragraphs are two newlines of separation.
 > [#241] @author: PR title
 >
 > diff --git a/test.md b/test.md
