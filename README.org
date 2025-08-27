@@ -15,6 +15,8 @@ With [[https://github.com/radian-software/straight.el][straight]] and [[https://
   :straight (ghpr :type git :host github :repo "priime0/ghpr.el"))
 #+end_src
 
+You need a [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens][personal access token]] stored in[[https://www.gnu.org/software/emacs/manual/html_node/emacs/Authentication.html][.authinfo(.gpg)]] with =repo= permissions, which will be used to handle interactions with the GitHub API for pull requests, including listing PRs and submitting reviews.
+
 ** Feature set
 
 Current features:
