@@ -46,6 +46,10 @@ Planned features:
 
 ** Example format
 
+ * =>= prefixes PR metadata and diff content from GitHub
+ * =<= prefixes existing review comments (to be implemented)
+ * Lines without prefixes are your review content: the review body above the first =>=, and individual inline comments in the diff sections
+
 #+begin_src
 This is the review's body. Markdown *is*
 supported throughout the body and your
@@ -54,6 +58,8 @@ by a single newline are joined together.
 
 Paragraphs are two newlines of separation.
 > [#241] @author: PR title
+>
+> The description of the PR.
 >
 > diff --git a/test.md b/test.md
 > index aa9e6ef..ae07d61 100644
