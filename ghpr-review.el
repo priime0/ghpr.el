@@ -122,11 +122,11 @@
   (erase-buffer)
   (let* ((number (alist-get 'number pr))
          (diff-content (ghpr--get-diff-content repo-name number))
-         (contents (ghpr--open-pr/collect-contents pr diff-content)))
+         (contents (ghpr--prefix-lines (ghpr--open-pr/collect-contents pr diff-content))))
     (setq ghpr--review-base-content contents)
     (setq ghpr--review-pr-metadata pr)
     (setq ghpr--review-repo-name repo-name)
-    (insert (ghpr--prefix-lines contents))))
+    (insert contents)))
 
 (defun ghpr--open-pr (pr repo-name)
   "Open a new buffer containing the body of the PR."
@@ -339,6 +339,14 @@ Returns an alist with comment, file-path, commit-sha, and diff-position, or nil 
           (commit-sha . ,(alist-get 'commit-sha context))
           (diff-position . ,(alist-get 'diff-position context)))))))
 
+(defun ghpr--validate-base-content-unchanged ()
+  "Validate that all base content (lines with > or < prefixes) remains unchanged.
+Returns t if validation passes, nil otherwise."
+  (let* ((current-lines (split-string (buffer-string) "\n"))
+         (base-lines (split-string ghpr--review-base-content "\n"))
+         (current-base-lines (seq-filter #'ghpr--special-line-p current-lines)))
+    (equal current-base-lines base-lines)))
+
 (defun ghpr--collect-review-comments ()
   "Collect all inline review comments from the current buffer.
 Returns an alist of comments with their associated diff lines and GitHub API context.
@@ -367,6 +375,9 @@ Collects review body and inline comments from current buffer."
     (error "No PR metadata found in buffer"))
   (unless ghpr--review-repo-name
     (error "No repository name found in buffer"))
+  ;; TODO: needs better usability. maybe highlight which lines were broken/missing and restore.
+  (unless (ghpr--validate-base-content-unchanged)
+    (error "Base content has been modified. Please restore the original diff content before submitting"))
 
   (let* ((body (ghpr--collect-review-body))
          (inline-comments (ghpr--collect-review-comments))
