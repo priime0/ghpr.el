@@ -393,13 +393,17 @@ Collects review body and inline comments from current buffer."
                (or (not body) (string-empty-p (string-trim body))))
       (error "Review body is required for %s events" event))
 
-    (unless (ghpr--create-review ghpr--review-repo-name
-                                 pr-number
-                                 commit-sha
-                                 (or body "")
-                                 event
-                                 api-comments)
-      (message "Failed to submit review"))))
+    (when (yes-or-no-p (format "Submit review (%s)? " event))
+      (if (ghpr--create-review ghpr--review-repo-name
+                               pr-number
+                               commit-sha
+                               (or body "")
+                               event
+                               api-comments)
+          (progn
+            (message "Review submitted successfully")
+            (kill-buffer (current-buffer)))
+        (message "Failed to submit review")))))
 
 (defun ghpr-review-comment ()
   "Submit review comments with COMMENT event."
